@@ -56,28 +56,34 @@ pool.getConnection(function(err, connection) {
 
     console.log('Request Body:', req.body);
 
-    const { name, price, stock,image } = req.body;
+    const { name, price, stock, image } = req.body;
     const date = Date.now();
     console.log(date)
     if (!name || !price || !stock || !image) { // check if any required field is missing
-      res.status(400).send('Missing required fields');
-      return;
+        res.status(400).send('Missing required fields');
+        return;
     }
-  
-    pool.query('INSERT INTO `products` (`name`, `price`, `image`, `date`, `stock`) VALUES (?, ?, ?, ?, ?)',
-  [name, price, image, date, stock],
-  (err, result) => {
-    if (err) {
-      console.error('Error creating product:', err);
-      res.sendStatus(500);
-      return;
-    }
-    console.log('Product created:', result);
-    res.sendStatus(201);
-  }
-);
 
-  });
+    pool.query('INSERT INTO `products` (`name`, `price`, `image`, `date`, `stock`) VALUES (?, ?, ?, ?, ?)',
+        [name, price, image, date, stock],
+        (err, result) => {
+            if (err) {
+                console.error('Error creating product:', err);
+                res.sendStatus(500);
+                return;
+            }
+            console.log('Product created:', result);
+
+            // set CORS headers
+            res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5501');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+            res.sendStatus(201);
+        }
+    );
+});
+
 
 //single product
 
