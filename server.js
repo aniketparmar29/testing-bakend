@@ -1,11 +1,12 @@
 const express = require('express');
-const multer = require('multer');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const app = express();
 const port = 3000;
 const cors = require('cors');
 const dotenv = require("dotenv");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 dotenv.config({path:"./config.env"})
 
@@ -14,18 +15,12 @@ app.use(cors({
 }));
 
 
+
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads/')
-    },
-    filename: function (req, file, cb) {
-      cb(null, file.originalname)
-    }
-  });
-  const upload = multer({ storage: storage });
+
 
 
 const pool = mysql.createPool({
@@ -52,38 +47,32 @@ pool.getConnection(function(err, connection) {
   });
 
   //create product
-  app.post('/products/new', upload.single('image'), (req, res) => {
+  app.post('/products/new',(req, res) => {
 
     console.log('Request Body:', req.body);
 
-    const { name, price, stock, image } = req.body;
+    const { name, price, stock,image } = req.body;
     const date = Date.now();
     console.log(date)
     if (!name || !price || !stock || !image) { // check if any required field is missing
-        res.status(400).send('Missing required fields');
-        return;
+      res.status(400).send('Missing required fields');
+      return;
     }
-
+  
     pool.query('INSERT INTO `products` (`name`, `price`, `image`, `date`, `stock`) VALUES (?, ?, ?, ?, ?)',
-        [name, price, image, date, stock],
-        (err, result) => {
-            if (err) {
-                console.error('Error creating product:', err);
-                res.sendStatus(500);
-                return;
-            }
-            console.log('Product created:', result);
+  [name, price, image, date, stock],
+  (err, result) => {
+    if (err) {
+      console.error('Error creating product:', err);
+      res.sendStatus(500);
+      return;
+    }
+    console.log('Product created:', result);
+    res.sendStatus(201);
+  }
+);
 
-            // set CORS headers
-            res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5501');
-            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-            res.sendStatus(201);
-        }
-    );
-});
-
+  });
 
 //single product
 
@@ -106,13 +95,12 @@ app.get('/products/:id', (req, res) => {
 
 
   ///update product
-  app.put('/products/:id', upload.single('image'), (req, res) => {
+  app.put('/products/:id', (req, res) => {
     const id = req.params.id;
     console.log(req.params.id)
-    const { name, price, stock, date } = req.body;
-    const imageUrl = req.file ? req.file.path : null; // check if file was uploaded
+    const { name, price, stock, image } = req.body;
     
-    if (!name || !price || !stock || !date) { // check if any required field is missing
+    if (!name || !price || !stock || !image) { // check if any required field is missing
       res.status(400).send('Missing required fields');
       return;
     }
@@ -128,9 +116,9 @@ app.get('/products/:id', (req, res) => {
       updateFields += 'price = ?, ';
       updateParams.push(price);
     }
-    if (imageUrl) {
+    if (image) {
       updateFields += 'image = ?, ';
-      updateParams.push(imageUrl);
+      updateParams.push(image);
     }
     if (date) {
       updateFields += 'date = ?, ';
@@ -163,7 +151,20 @@ app.get('/products/:id', (req, res) => {
 
   //get all products
   app.get('/products', (req, res) => {
-    pool.query('SELECT * FROM products', (err, results) => {
+    const { sort } = req.query;
+  
+    let order = '';
+    if (sort === 'desc') {
+      order = 'ORDER BY price DESC';
+    } else if (sort === 'asc') {
+      order = 'ORDER BY price ASC';
+    } else if (sort === 'atoz') {
+      order = 'ORDER BY name ASC';
+    } else if (sort === 'ztoa') {
+      order = 'ORDER BY name DESC';
+    }
+  
+    pool.query(`SELECT * FROM products ${order}`, (err, results) => {
       if (err) {
         console.error('Error retrieving products:', err);
         res.sendStatus(500);
@@ -173,6 +174,21 @@ app.get('/products/:id', (req, res) => {
     });
   });
   
+//serach product
+app.get('/search', (req, res) => {
+  const { name } = req.query;
+  pool.query(`SELECT * FROM products WHERE name LIKE '%${name}%'`, (err, results) => {
+    if (err) {
+      console.error('Error searching for products:', err);
+      res.sendStatus(500);
+      return;
+    }
+    res.json(results);
+  });
+  
+  
+});
+
 
 // delete prodocut
 
@@ -189,7 +205,116 @@ app.delete('/products/:id', (req, res) => {
   });
 });
 
+// Register route
+app.post('/register', (req, res) => {
+  const { email, password, name} = req.body;
 
-app.listen(port, () => {
+  // Hash password using bcrypt
+  const saltRounds = 10;
+
+  bcrypt.hash(password, saltRounds, (err, hash) => {
+    if (err) {
+      console.error('Error hashing password:', err);
+      res.sendStatus(500);
+      return;
+    }
+
+    const role="user"
+    // Insert new user into MySQL database
+    const sql = 'INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)';
+    const values = [email, hash, name, role];
+    pool.query(sql, values, (error, results) => {
+      if (error) {
+        console.error('Error inserting user into database:', error);
+        res.sendStatus(500);
+        return;
+      }
+
+      // Generate token for user
+      const token = generateToken(results.insertId);
+
+      // Set token as cookie in response
+      res.cookie('token', token);
+
+      // Send success response
+      res.send('User registered successfully');
+    });
+  });
+});
+
+
+// Login route
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+
+  // Retrieve user from MySQL database by email
+  const sql = 'SELECT * FROM users WHERE email = ?';
+  const values = [email];
+  pool.query(sql, values, (error, results) => {
+    if (error) {
+      console.error('Error retrieving user from database:', error);
+      res.sendStatus(500);
+      return;
+    }
+
+    if (results.length === 0) {
+      res.sendStatus(401);
+      return;
+    }
+
+    // Compare password with hashed password using bcrypt
+    const user = results[0];
+    bcrypt.compare(password, user.password, (err, passwordMatch) => {
+      if (err || !passwordMatch) {
+        console.error('Error comparing password:', err);
+        res.sendStatus(401);
+        return;
+      }
+
+      // Generate token for user
+      const token = generateToken(user.id);
+
+      // Set token as cookie in response
+      res.cookie('token', token);
+
+      // Send success response with user data and token
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role
+        },
+        token
+      });
+    });
+  });
+});
+
+
+// Generate token function
+function generateToken(userId) {
+  const token = jwt.sign({ userId }, 'secret_key', { expiresIn: '1h' });
+  return token;
+}
+
+
+const server = app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Unhandled exception:', err);
+  // gracefully shutdown the server
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection:', err);
+  // gracefully shutdown the server
+  server.close(() => {
+    process.exit(1);
+  });
 });
