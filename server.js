@@ -2,7 +2,7 @@ const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const app = express();
-const port = 3000;
+const port = 4000;
 const cors = require('cors');
 const dotenv = require("dotenv");
 const bcrypt = require('bcrypt');
@@ -11,7 +11,8 @@ const jwt = require('jsonwebtoken');
 dotenv.config({path:"./config.env"})
 
 app.use(cors({
-  origin: 'http://127.0.0.1:5500'
+  origin: 'http://localhost:3000',
+  credentials: true,
 }));
 
 
@@ -207,6 +208,7 @@ app.delete('/products/:id', (req, res) => {
 
 // Register route
 app.post('/register', (req, res) => {
+  console.log(req.body)
   const { email, password, name} = req.body;
 
   // Hash password using bcrypt
@@ -220,9 +222,10 @@ app.post('/register', (req, res) => {
     }
 
     const role="user"
+    const orders="0";
     // Insert new user into MySQL database
-    const sql = 'INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)';
-    const values = [email, hash, name, role];
+    const sql = 'INSERT INTO users (email, password, name, role, orders) VALUES (?, ?, ?, ?, ?)';
+    const values = [email, hash, name, role, orders];
     pool.query(sql, values, (error, results) => {
       if (error) {
         console.error('Error inserting user into database:', error);
@@ -245,6 +248,7 @@ app.post('/register', (req, res) => {
 
 // Login route
 app.post('/login', (req, res) => {
+  console.log(req.body)
   const { email, password } = req.body;
 
   // Retrieve user from MySQL database by email
@@ -264,12 +268,15 @@ app.post('/login', (req, res) => {
 
     // Compare password with hashed password using bcrypt
     const user = results[0];
-    bcrypt.compare(password, user.password, (err, passwordMatch) => {
-      if (err || !passwordMatch) {
-        console.error('Error comparing password:', err);
-        res.sendStatus(401);
-        return;
-      }
+    console.log(password,user.password)
+
+    try {
+  bcrypt.compare(password, user.password, (err, passwordMatch) => {
+    if (err || !passwordMatch) {
+      console.error('Error comparing password:', err);
+      res.sendStatus(401);
+      return;
+    }
 
       // Generate token for user
       const token = generateToken(user.id);
@@ -288,8 +295,135 @@ app.post('/login', (req, res) => {
         token
       });
     });
+} catch (err) {
+  console.error('Error during bcrypt.compare:', err);
+  res.sendStatus(500);
+}
   });
 });
+
+//delete user
+app.delete('/user/:id', (req, res) => {
+  const userid = req.params.id;
+
+  pool.query('DELETE FROM `users` WHERE `id` = ?', [userid], (err, result) => {
+    if (err) {
+      console.error('Error deleting product:', err);
+      res.sendStatus(500,"there is some error");
+      return;
+    }
+    res.sendStatus(200,"product deleted");
+  });
+});
+
+//single user
+app.get('/user/:id', (req, res) => {
+  const userid = req.params.id;
+  pool.query('SELECT `id`, `name`, `email`, `password`, `role`, `orders` FROM `users` WHERE `id` = ?', [userid], (err, results) => {
+    if (err) {
+      console.error('Error retrieving product:', err);
+      res.sendStatus(500);
+      return;
+    }
+    if (results.length === 0) {
+      res.sendStatus(404); // return a 404 status code if the product is not found
+      return;
+    }
+    res.json(results[0]); // return the first product in the array
+  });
+});
+
+//get all users
+
+app.get('/users', (req, res) => {
+  const { sort } = req.query;
+
+  let order = '';
+  if(sort === 'atoz') {
+    order = 'ORDER BY name ASC';
+  } else if (sort === 'ztoa') {
+    order = 'ORDER BY name DESC';
+  }
+
+  pool.query(`SELECT * FROM users ${order}`, (err, results) => {
+    if (err) {
+      console.error('Error retrieving users:', err);
+      res.sendStatus(500);
+      return;
+    }
+    res.json(results);
+  });
+});
+
+
+
+//order
+
+app.post('/orders', (req, res) => {
+  const { paymentOption, address, productIds } = req.body;
+
+  // Get the user ID from the authenticated user's JWT token
+  const userId = getUserIdFromToken(req.cookies.token);
+
+  // Start a transaction to create the new order
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting connection from pool:', err);
+      res.sendStatus(500);
+      return;
+    }
+
+    connection.beginTransaction((err) => {
+      if (err) {
+        console.error('Error starting transaction:', err);
+        res.sendStatus(500);
+        return;
+      }
+
+      // Insert the new order into the orders table
+      const orderSql = 'INSERT INTO orders (payment_option, address, user_id) VALUES (?, ?, ?)';
+      const orderValues = [paymentOption, address, userId];
+      connection.query(orderSql, orderValues, (error, results) => {
+        if (error) {
+          console.error('Error inserting new order:', error);
+          connection.rollback();
+          res.sendStatus(500);
+          return;
+        }
+
+        const orderId = results.insertId;
+
+        // Insert the product IDs into the order_items table
+        const orderItemsSql = 'INSERT INTO order_items (order_id, product_id) VALUES (?, ?)';
+        const orderItemsValues = productIds.map(productId => [orderId, productId]);
+        connection.query(orderItemsSql, orderItemsValues, (error, results) => {
+          if (error) {
+            console.error('Error inserting order items:', error);
+            connection.rollback();
+            res.sendStatus(500);
+            return;
+          }
+
+          // Commit the transaction and send the response
+          connection.commit((err) => {
+            if (err) {
+              console.error('Error committing transaction:', err);
+              connection.rollback();
+              res.sendStatus(500);
+              return;
+            }
+
+            res.json({ message: 'Order created successfully' });
+          });
+        });
+      });
+    });
+
+    connection.release();
+  });
+});
+
+
 
 
 // Generate token function
