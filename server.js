@@ -32,6 +32,14 @@ connectionLimit: 100,
   database: process.env.DATABASE,
 });
 
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://hathibrand.in');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 pool.getConnection(function(err, connection) {
     if (err) throw err;
   
