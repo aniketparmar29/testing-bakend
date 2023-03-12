@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 dotenv.config({path:"./config.env"})
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'https://hathibrand.in/'],
   credentials: true,
 }));
 
@@ -25,7 +25,7 @@ app.use(bodyParser.json());
 
 
 const pool = mysql.createPool({
-connectionLimit: 10,
+connectionLimit: 100,
   host: process.env.HOST,
   user: process.env.USER,
   password: process.env.PASSWORD,
