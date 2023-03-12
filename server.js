@@ -79,7 +79,7 @@ pool.getConnection(function(err, connection) {
 
 app.get('/products/:id', (req, res) => {
   const productId = req.params.id;
-  pool.query('SELECT `id`, `name`, `price`, `image`, `date`, `stock`, `weight`, `Category` FROM `products` WHERE `id` = ?', [productId], (err, results) => {
+  pool.query('SELECT `id`, `name`, `price`, `image`, `date`, `stock`, `weight`, `Category`, `reviews` FROM `products` WHERE `id` = ?', [productId], (err, results) => {
     if (err) {
       console.error('Error retrieving product:', err);
       res.sendStatus(500);
@@ -99,9 +99,9 @@ app.get('/products/:id', (req, res) => {
   app.put('/products/:id', (req, res) => {
     const id = req.params.id;
     console.log(req.params.id)
-    const { name, price, stock, image, weight, category  } = req.body;
+    const { name, price, stock, image, weight, category,reviews } = req.body;
     
-    if (!name || !price || !stock || !image || !weight || !category) { // check if any required field is missing
+    if (!name || !price || !stock || !image || !weight || !category || !reviews) { // check if any required field is missing
       res.status(400).send('Missing required fields');
       return;
     }
@@ -136,6 +136,10 @@ app.get('/products/:id', (req, res) => {
     if (category) {
       updateFields += 'category = ?, ';
       updateParams.push(category);
+    }
+    if (reviews) {
+      updateFields += 'reviews = ?, ';
+      updateParams.push(reviews);
     }
   
     // remove trailing comma
@@ -431,7 +435,36 @@ app.post('/orders', (req, res) => {
   });
 });
 
+//Reviews
 
+app.post('/products/:id/reviews', (req, res) => {
+  console.log(req.body)
+  const { name, review, rating } = req.body;
+  const productId = req.params.id;
+  const reviewObj = { name, review, rating };
+  
+  pool.query('SELECT * FROM products WHERE id = ?', [productId], (err, results) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error retrieving product from database');
+    } else if (results.length === 0) {
+      res.status(404).send(`Product with ID ${productId} not found`);
+    } else {
+      const product = results[0];
+      const reviews = JSON.parse(product.reviews || '[]');
+      reviews.push(reviewObj);
+      
+      pool.query('UPDATE products SET reviews = ? WHERE id = ?', [JSON.stringify(reviews), productId], (err) => {
+        if (err) {
+          console.error(err);
+          res.status(500).send('Error updating product reviews in database');
+        } else {
+          res.status(200).send('Product reviews updated successfully');
+        }
+      });
+    }
+  });
+});
 
 
 // Generate token function
