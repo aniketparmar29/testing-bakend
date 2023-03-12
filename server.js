@@ -52,16 +52,16 @@ pool.getConnection(function(err, connection) {
 
     console.log('Request Body:', req.body);
 
-    const { name, price, stock,image } = req.body;
+    const { name, price, stock,image,weight } = req.body;
     const date = Date.now();
     console.log(date)
-    if (!name || !price || !stock || !image) { // check if any required field is missing
+    if (!name || !price || !stock || !image || !weight) { // check if any required field is missing
       res.status(400).send('Missing required fields');
       return;
     }
   
-    pool.query('INSERT INTO `products` (`name`, `price`, `image`, `date`, `stock`) VALUES (?, ?, ?, ?, ?)',
-  [name, price, image, date, stock],
+    pool.query('INSERT INTO `products` (`name`, `price`, `image`, `date`, `stock`,`weight`) VALUES (?, ?, ?, ?, ?, ?)',
+  [name, price, image, date, stock,weight],
   (err, result) => {
     if (err) {
       console.error('Error creating product:', err);
