@@ -79,7 +79,7 @@ pool.getConnection(function(err, connection) {
 
 app.get('/products/:id', (req, res) => {
   const productId = req.params.id;
-  pool.query('SELECT `id`, `name`, `price`, `image`, `date`, `stock` FROM `products` WHERE `id` = ?', [productId], (err, results) => {
+  pool.query('SELECT `id`, `name`, `price`, `image`, `date`, `stock`, `weight`, `Category` FROM `products` WHERE `id` = ?', [productId], (err, results) => {
     if (err) {
       console.error('Error retrieving product:', err);
       res.sendStatus(500);
@@ -99,9 +99,9 @@ app.get('/products/:id', (req, res) => {
   app.put('/products/:id', (req, res) => {
     const id = req.params.id;
     console.log(req.params.id)
-    const { name, price, stock, image } = req.body;
+    const { name, price, stock, image, weight, category  } = req.body;
     
-    if (!name || !price || !stock || !image) { // check if any required field is missing
+    if (!name || !price || !stock || !image || !weight || !category) { // check if any required field is missing
       res.status(400).send('Missing required fields');
       return;
     }
@@ -128,6 +128,14 @@ app.get('/products/:id', (req, res) => {
     if (stock) {
       updateFields += 'stock = ?, ';
       updateParams.push(stock);
+    }
+    if (weight) {
+      updateFields += 'weight = ?, ';
+      updateParams.push(weight);
+    }
+    if (category) {
+      updateFields += 'category = ?, ';
+      updateParams.push(category);
     }
   
     // remove trailing comma
