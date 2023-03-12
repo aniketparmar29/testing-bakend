@@ -52,16 +52,16 @@ pool.getConnection(function(err, connection) {
 
     console.log('Request Body:', req.body);
 
-    const { name, price, stock,image,weight } = req.body;
+    const { name, price, stock,image,weight,Category } = req.body;
     const date = Date.now();
     console.log(date)
-    if (!name || !price || !stock || !image || !weight) { // check if any required field is missing
+    if (!name || !price || !stock || !image || !weight || !Category) { // check if any required field is missing
       res.status(400).send('Missing required fields');
       return;
     }
   
-    pool.query('INSERT INTO `products` (`name`, `price`, `image`, `date`, `stock`,`weight`) VALUES (?, ?, ?, ?, ?, ?)',
-  [name, price, image, date, stock,weight],
+    pool.query('INSERT INTO `products` (`name`, `price`, `image`, `date`, `stock`,`weight`,`Category`) VALUES (?, ?, ?, ?, ?, ?)',
+  [name, price, image, date, stock,weight,Category],
   (err, result) => {
     if (err) {
       console.error('Error creating product:', err);
@@ -185,8 +185,8 @@ app.get('/products/:id', (req, res) => {
   
 //serach product
 app.get('/search', (req, res) => {
-  const { name } = req.query;
-  pool.query(`SELECT * FROM products WHERE name LIKE '%${name}%'`, (err, results) => {
+  const { query } = req.query;
+  pool.query(`SELECT * FROM products WHERE name LIKE '%${query}%'`, (err, results) => {
     if (err) {
       console.error('Error searching for products:', err);
       res.sendStatus(500);
