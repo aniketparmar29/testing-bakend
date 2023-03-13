@@ -10,10 +10,10 @@ const jwt = require('jsonwebtoken');
 
 dotenv.config({path:"./config.env"})
 
-app.use(cors({
-  origin: ['https://hathibrand.in/','http://localhost:3000'],
-  credentials: true,
-}));
+// app.use(cors({
+//   origin: ['https://hathibrand.in/','http://localhost:3000'],
+//   credentials: true,
+// }));
 
 
 
@@ -32,10 +32,10 @@ connectionLimit: 100,
   database: process.env.DATABASE,
 });
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://hathibrand.in');
-  next();
-});
+// app.use((req, res, next) => {
+//   res.setHeader('Access-Control-Allow-Origin', 'https://hathibrand.in');
+//   next();
+// });
 
 
 
