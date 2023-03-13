@@ -480,34 +480,69 @@ app.post('/products/:id/reviews', (req, res) => {
 
 //cart
 
-app.post('/user/:id/cart', (req, res) => {
-  console.log(req.body)
-  const {id,name,image,price,weight,que} = req.body;
+app.post('/users/:id/cart', (req, res) => {
   const productId = req.params.id;
-  const cartobj = {id,name,image,price,weight,que};
-  
+  const productObj = req.body;
+
   pool.query('SELECT * FROM users WHERE id = ?', [productId], (err, results) => {
     if (err) {
       console.error(err);
-      res.status(500).send('Error retrieving product from database');
+      res.status(500).send('Error retrieving user from database');
     } else if (results.length === 0) {
-      res.status(404).send(`Product with ID ${productId} not found`);
+      res.status(404).send(`User with ID ${productId} not found`);
     } else {
-      const product = results[0];
-      const cart = JSON.parse(product.cart || '[]');
-      cart.push(cartobj);
-      
-      pool.query('UPDATE products SET cart = ? WHERE id = ?', [JSON.stringify(cart), productId], (err) => {
+      const user = results[0];
+      const cart = JSON.parse(user.cart || '[]');
+      cart.push(productObj);
+
+      pool.query('UPDATE users SET cart = ? WHERE id = ?', [JSON.stringify(cart), productId], (err) => {
         if (err) {
           console.error(err);
-          res.status(500).send('Error updating product cart in database');
+          res.status(500).send('Error updating user cart in database');
         } else {
-          res.status(200).send('Product cart updated successfully');
+          res.status(200).send('Product added to cart successfully');
         }
       });
     }
   });
 });
+
+// delete cart
+app.delete('/users/:id/cart/:productId', (req, res) => {
+  const userId = req.params.id;
+  const productId = req.params.productId;
+
+  pool.query('SELECT * FROM users WHERE id = ?', [userId], (err, results) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error retrieving user from database');
+    } else if (results.length === 0) {
+      res.status(404).send(`User with ID ${userId} not found`);
+    } else {
+      const user = results[0];
+      const cart = JSON.parse(user.cart || '[]');
+      const index = cart.findIndex(product => product.id === productId);
+      if (index === -1) {
+        res.status(404).send(`Product with ID ${productId} not found in cart`);
+      } else {
+        cart.splice(index, 1);
+
+        pool.query('UPDATE users SET cart = ? WHERE id = ?', [JSON.stringify(cart), userId], (err) => {
+          if (err) {
+            console.error(err);
+            res.status(500).send('Error updating user cart in database');
+          } else {
+            res.status(200).send('Product removed from cart successfully');
+          }
+        });
+      }
+    }
+  });
+});
+
+
+
+
 
 // Generate token function
 function generateToken(userId) {
