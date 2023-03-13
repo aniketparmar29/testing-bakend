@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 dotenv.config({path:"./config.env"})
 
 app.use(cors({
-  origin: 'https://hathibrand.in/',
+  origin: ['https://hathibrand.in/','http://localhost:3000'],
   credentials: true,
 }));
 
