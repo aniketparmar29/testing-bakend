@@ -476,6 +476,36 @@ app.post('/products/:id/reviews', (req, res) => {
   });
 });
 
+//cart
+
+app.post('/user/:id/cart', (req, res) => {
+  console.log(req.body)
+  const {id,name,image,price,weight,que} = req.body;
+  const productId = req.params.id;
+  const cartobj = {id,name,image,price,weight,que};
+  
+  pool.query('SELECT * FROM users WHERE id = ?', [productId], (err, results) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error retrieving product from database');
+    } else if (results.length === 0) {
+      res.status(404).send(`Product with ID ${productId} not found`);
+    } else {
+      const product = results[0];
+      const cart = JSON.parse(product.cart || '[]');
+      cart.push(cartobj);
+      
+      pool.query('UPDATE products SET cart = ? WHERE id = ?', [JSON.stringify(cart), productId], (err) => {
+        if (err) {
+          console.error(err);
+          res.status(500).send('Error updating product cart in database');
+        } else {
+          res.status(200).send('Product cart updated successfully');
+        }
+      });
+    }
+  });
+});
 
 // Generate token function
 function generateToken(userId) {
