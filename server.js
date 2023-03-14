@@ -244,10 +244,11 @@ app.post('/register', (req, res) => {
     }
 
     const role="user"
-    const orders="0";
+    const orders="";
+    const cart="";
     // Insert new user into MySQL database
-    const sql = 'INSERT INTO users (email, password, name, role, orders) VALUES (?, ?, ?, ?, ?)';
-    const values = [email, hash, name, role, orders];
+    const sql = 'INSERT INTO users (email, password, name, role, orders, cart) VALUES (?, ?, ?, ?, ?, ?)';
+    const values = [email, hash, name, role, orders, cart];
     pool.query(sql, values, (error, results) => {
       if (error) {
         console.error('Error inserting user into database:', error);
