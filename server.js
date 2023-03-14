@@ -481,8 +481,8 @@ app.post('/products/:id/reviews', (req, res) => {
 
 app.post('/users/:id/cart', (req, res) => {
   const productId = req.params.id;
-  const productObj = req.body;
-
+  const {productObj,que} = req.body;
+  
   pool.query('SELECT * FROM users WHERE id = ?', [productId], (err, results) => {
     if (err) {
       console.error(err);
@@ -492,7 +492,7 @@ app.post('/users/:id/cart', (req, res) => {
     } else {
       const user = results[0];
       const cart = JSON.parse(user.cart || '[]');
-      cart.push(productObj);
+      cart.push(productObj,que);
 
       pool.query('UPDATE users SET cart = ? WHERE id = ?', [JSON.stringify(cart), productId], (err) => {
         if (err) {
