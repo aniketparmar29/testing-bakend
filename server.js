@@ -58,32 +58,30 @@ pool.getConnection(function(err, connection) {
   });
 
   //create product
-  app.post('/products/new',(req, res) => {
-
+  app.post('/products/new', (req, res) => {
     console.log('Request Body:', req.body);
-
-    const { name, price, stock,image,weight,Category } = req.body;
-    const date = Date.now();
-    console.log(date)
+  
+    const { name, price, stock, image, weight, Category } = req.body;
     if (!name || !price || !stock || !image || !weight || !Category) { // check if any required field is missing
       res.status(400).send('Missing required fields');
       return;
     }
   
-    pool.query('INSERT INTO `products` (`name`, `price`, `image`, `date`, `stock`,`weight`,`Category`) VALUES (?, ?, ?, ?, ?, ?)',
-  [name, price, image, date, stock,weight,Category],
-  (err, result) => {
-    if (err) {
-      console.error('Error creating product:', err);
-      res.sendStatus(500);
-      return;
-    }
-    console.log('Product created:', result);
-    res.sendStatus(201);
-  }
-);
-
+    pool.query(
+      'INSERT INTO `products` (`name`, `price`, `image`, `stock`, `weight`, `Category`) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, price, image, stock, weight, Category],
+      (err, result) => {
+        if (err) {
+          console.error('Error creating product:', err);
+          res.sendStatus(500);
+          return;
+        }
+        console.log('Product created:', result);
+        res.sendStatus(201);
+      }
+    );
   });
+  
 
 //single product
 
@@ -245,7 +243,7 @@ app.post('/register', (req, res) => {
 
     const role="user"
     // Insert new user into MySQL database
-    const sql = 'INSERT INTO users (email, password, name, role,) VALUES (?, ?, ?, ?)';
+    const sql = 'INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)';
     const values = [email, hash, name, role];
     pool.query(sql, values, (error, results) => {
       if (error) {
@@ -312,8 +310,6 @@ app.post('/login', (req, res) => {
           email: user.email,
           name: user.name,
           role: user.role,
-          orders:user.orders,
-          cart:user.cart
         },
         token
       });
@@ -378,166 +374,171 @@ app.get('/users', (req, res) => {
   });
 });
 
+//cart 
 
+app.post('/add-to-cart', (req, res) => {
+  const { pr_name, pr_price, pr_que, pr_id, pr_img, user_id } = req.body;
 
-//order
+  // insert the item into the cart table
+  pool.query(
+    'INSERT INTO cart (pr_name, pr_price, pr_que, pr_id, pr_img, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+    [pr_name, pr_price, pr_que, pr_id, pr_img, user_id],
+    (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        res.status(500).send('Error adding item to cart');
+      } else {
+        res.status(200).send('Item added to cart');
+      }
+    }
+  );
+});
 
-app.post('/orders', (req, res) => {
-  const { paymentOption, address, productIds } = req.body;
+// get cart
+app.get('/cart/:userId', (req, res) => {
+  const userId = req.params.userId;
 
-  // Get the user ID from the authenticated user's JWT token
-  const userId = getUserIdFromToken(req.cookies.token);
-
-  // Start a transaction to create the new order
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error('Error getting connection from pool:', err);
-      res.sendStatus(500);
+  pool.query('SELECT * FROM cart WHERE user_id = ?', [userId], (error, results) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send('Error retrieving cart details');
       return;
     }
 
-    connection.beginTransaction((err) => {
-      if (err) {
-        console.error('Error starting transaction:', err);
-        res.sendStatus(500);
-        return;
-      }
-
-      // Insert the new order into the orders table
-      const orderSql = 'INSERT INTO orders (payment_option, address, user_id) VALUES (?, ?, ?)';
-      const orderValues = [paymentOption, address, userId];
-      connection.query(orderSql, orderValues, (error, results) => {
-        if (error) {
-          console.error('Error inserting new order:', error);
-          connection.rollback();
-          res.sendStatus(500);
-          return;
-        }
-
-        const orderId = results.insertId;
-
-        // Insert the product IDs into the order_items table
-        const orderItemsSql = 'INSERT INTO order_items (order_id, product_id) VALUES (?, ?)';
-        const orderItemsValues = productIds.map(productId => [orderId, productId]);
-        connection.query(orderItemsSql, orderItemsValues, (error, results) => {
-          if (error) {
-            console.error('Error inserting order items:', error);
-            connection.rollback();
-            res.sendStatus(500);
-            return;
-          }
-
-          // Commit the transaction and send the response
-          connection.commit((err) => {
-            if (err) {
-              console.error('Error committing transaction:', err);
-              connection.rollback();
-              res.sendStatus(500);
-              return;
-            }
-
-            res.json({ message: 'Order created successfully' });
-          });
-        });
-      });
-    });
-
-    connection.release();
+    res.send(results);
   });
 });
 
-//Reviews
-
-app.post('/products/:id/reviews', (req, res) => {
-  console.log(req.body)
-  const { name, review, rating } = req.body;
-  const productId = req.params.id;
-  const reviewObj = { name, review, rating };
-  
-  pool.query('SELECT * FROM products WHERE id = ?', [productId], (err, results) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send('Error retrieving product from database');
-    } else if (results.length === 0) {
-      res.status(404).send(`Product with ID ${productId} not found`);
-    } else {
-      const product = results[0];
-      const reviews = JSON.parse(product.reviews || '[]');
-      reviews.push(reviewObj);
-      
-      pool.query('UPDATE products SET reviews = ? WHERE id = ?', [JSON.stringify(reviews), productId], (err) => {
-        if (err) {
-          console.error(err);
-          res.status(500).send('Error updating product reviews in database');
-        } else {
-          res.status(200).send('Product reviews updated successfully');
-        }
-      });
-    }
-  });
-});
-
-//cart
-
-app.post('/users/:id/cart', (req, res) => {
-  const productId = req.params.id;
-  const {productObj} = req.body;
-  
-  pool.query('SELECT * FROM users WHERE id = ?', [productId], (err, results) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send('Error retrieving user from database');
-    } else if (results.length === 0) {
-      res.status(404).send(`User with ID ${productId} not found`);
-    } else {
-      const user = results[0];
-      const cart = JSON.parse(user.cart || '[]');
-      cart.push(productObj);
-
-      pool.query('UPDATE users SET cart = ? WHERE id = ?', [JSON.stringify(cart), productId], (err) => {
-        if (err) {
-          console.error(err);
-          res.status(500).send('Error updating user cart in database');
-        } else {
-          res.status(200).send('Product added to cart successfully');
-        }
-      });
-    }
-  });
-});
 
 // delete cart
-app.delete('/users/:id/cart/:productId', (req, res) => {
-  const userId = req.params.id;
-  const productId = req.params.productId;
+app.delete('/cart/:userId/:prId', (req, res) => {
+  const userId = req.params.userId;
+  const prId = req.params.prId;
 
-  pool.query('SELECT * FROM users WHERE id = ?', [userId], (err, results) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send('Error retrieving user from database');
-    } else if (results.length === 0) {
-      res.status(404).send(`User with ID ${userId} not found`);
-    } else {
-      const user = results[0];
-      const cart = JSON.parse(user.cart || '[]');
-      const index = cart.findIndex(product => product.id === productId);
-      if (index === -1) {
-        res.status(404).send(`Product with ID ${productId} not found in cart`);
-      } else {
-        cart.splice(index, 1);
-
-        pool.query('UPDATE users SET cart = ? WHERE id = ?', [JSON.stringify(cart), userId], (err) => {
-          if (err) {
-            console.error(err);
-            res.status(500).send('Error updating user cart in database');
-          } else {
-            res.status(200).send('Product removed from cart successfully');
-          }
-        });
-      }
+  pool.query('DELETE FROM cart WHERE user_id = ? AND pr_id = ?', [userId, prId], (error, results) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send('Error deleting item from cart');
+      return;
     }
+
+    if (results.affectedRows === 0) {
+      res.status(404).send('Item not found in cart');
+      return;
+    }
+
+    res.send(`Item with pr_id ${prId} deleted from cart for user with user_id ${userId}`);
   });
 });
+
+//update_cart
+
+app.put('/cart/:userId/:prId', (req, res) => {
+  const userId = req.params.userId;
+  const prId = req.params.prId;
+  const prQue = req.body.pr_que;
+
+  pool.query('UPDATE cart SET pr_que = ? WHERE user_id = ? AND pr_id = ?', [prQue, userId, prId], (error, results) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send('Error updating item in cart');
+      return;
+    }
+
+    if (results.affectedRows === 0) {
+      res.status(404).send('Item not found in cart');
+      return;
+    }
+
+    res.send(`Item with pr_id ${prId} updated in cart for user with user_id ${userId}`);
+  });
+});
+
+//reviews
+
+
+app.post('/reviews/new', (req, res) => {
+  const { user_name, rating, review, pr_id, user_id } = req.body;
+
+  // insert the item into the cart table
+  pool.query(
+    'INSERT INTO reviews (user_name, rating, review, pr_id, user_id) VALUES (?, ?, ?, ?, ?)',
+    [user_name,rating,review, pr_id, user_id],
+    (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        res.status(500).send('Error adding review to reviews');
+      } else {
+        res.status(200).send('Item added to reviews');
+      }
+    }
+  );
+});
+
+// get reviews
+app.get('/reviews/:pr_id', (req, res) => {
+  const pr_id = req.params.pr_id;
+
+  pool.query('SELECT * FROM reviews WHERE pr_id = ?', [pr_id], (error, results) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send('Error retrieving reviews details');
+      return;
+    }
+
+    console.log(results)
+    res.send(results);
+  });
+});
+
+
+// delete cart
+app.delete('/reviews/:userId/:prId', (req, res) => {
+  const userId = req.params.userId;
+  const prId = req.params.prId;
+
+  pool.query('DELETE FROM reviews WHERE user_id = ? AND pr_id = ?', [userId, prId], (error, results) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send('Error deleting item from cart');
+      return;
+    }
+
+    if (results.affectedRows === 0) {
+      res.status(404).send('Item not found in cart');
+      return;
+    }
+
+    res.send(`Item with pr_id ${prId} deleted from cart for user with user_id ${userId}`);
+  });
+});
+
+//review update
+
+app.put('/reviews/:userId/:prId', (req, res) => {
+  const userId = req.params.userId;
+  const prId = req.params.prId;
+  const rating = req.body.rating;
+  const review = req.body.review;
+
+  pool.query('UPDATE reviews SET rating = ?, review = ? WHERE user_id = ? AND pr_id = ?', [rating, review, userId, prId], (error, results) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send('Error updating item in reviews');
+      return;
+    }
+
+    if (results.affectedRows === 0) {
+      res.status(404).send('Item not found in reviews');
+      return;
+    }
+
+    res.send(`Item with pr_id ${prId} updated in reviews for user with user_id ${userId}`);
+  });
+});
+
+
+
 
 
 
