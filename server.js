@@ -228,41 +228,63 @@ app.delete('/products/:id', (req, res) => {
 
 // Register route
 app.post('/register', (req, res) => {
-  console.log(req.body)
-  const { email, password, name} = req.body;
+  console.log(req.body);
+  const { email, password, name } = req.body;
 
-  // Hash password using bcrypt
-  const saltRounds = 10;
+  // Check if email already exists in the database
+  const checkEmailSql = 'SELECT COUNT(*) AS count FROM users WHERE email = ?';
+  const checkEmailValues = [email];
 
-  bcrypt.hash(password, saltRounds, (err, hash) => {
-    if (err) {
-      console.error('Error hashing password:', err);
+  pool.query(checkEmailSql, checkEmailValues, (error, results) => {
+    if (error) {
+      console.error('Error checking email in database:', error);
       res.sendStatus(500);
       return;
     }
 
-    const role="user"
-    // Insert new user into MySQL database
-    const sql = 'INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)';
-    const values = [email, hash, name, role];
-    pool.query(sql, values, (error, results) => {
-      if (error) {
-        console.error('Error inserting user into database:', error);
+    const emailExists = results[0].count > 0;
+
+    if (emailExists) {
+      res.status(400).send('Email already registered');
+      return;
+    }
+
+    // Hash password using bcrypt
+    const saltRounds = 10;
+
+    bcrypt.hash(password, saltRounds, (err, hash) => {
+      if (err) {
+        console.error('Error hashing password:', err);
         res.sendStatus(500);
         return;
       }
 
-      // Generate token for user
-      const token = generateToken(results.insertId);
+      const role = 'user';
 
-      // Set token as cookie in response
-      res.cookie('token', token);
+      // Insert new user into MySQL database
+      const insertUserSql = 'INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)';
+      const insertUserValues = [email, hash, name, role];
 
-      // Send success response
-      res.send('User registered successfully');
+      pool.query(insertUserSql, insertUserValues, (error, results) => {
+        if (error) {
+          console.error('Error inserting user into database:', error);
+          res.sendStatus(500);
+          return;
+        }
+
+        // Generate token for user
+        const token = generateToken(results.insertId);
+
+        // Set token as cookie in response
+        res.cookie('token', token);
+
+        // Send success response
+        res.send('User registered successfully');
+      });
     });
   });
 });
+
 
 
 // Login route
