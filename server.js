@@ -379,9 +379,9 @@ app.get('/users', (req, res) => {
 app.post('/add-to-cart', (req, res) => {
   const { pr_name, pr_price, pr_que, pr_id, pr_img, user_id } = req.body;
 
-  // insert the item into the cart table
+  // insert or update the item in the cart table
   pool.query(
-    'INSERT INTO cart (pr_name, pr_price, pr_que, pr_id, pr_img, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+    'INSERT INTO cart (pr_name, pr_price, pr_que, pr_id, pr_img, user_id) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE pr_que = CASE WHEN pr_id = VALUES(pr_id) AND user_id = VALUES(user_id) THEN pr_que + VALUES(pr_que) ELSE pr_que END',
     [pr_name, pr_price, pr_que, pr_id, pr_img, user_id],
     (error, results, fields) => {
       if (error) {
@@ -393,6 +393,8 @@ app.post('/add-to-cart', (req, res) => {
     }
   );
 });
+
+
 
 // get cart
 app.get('/cart/:userId', (req, res) => {
@@ -492,7 +494,7 @@ app.get('/reviews/:pr_id', (req, res) => {
 });
 
 
-// delete cart
+// delete reviews
 app.delete('/reviews/:userId/:prId', (req, res) => {
   const userId = req.params.userId;
   const prId = req.params.prId;
