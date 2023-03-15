@@ -87,7 +87,7 @@ pool.getConnection(function(err, connection) {
 
 app.get('/products/:id', (req, res) => {
   const productId = req.params.id;
-  pool.query('SELECT `id`, `name`, `price`, `image`, `date`, `stock`, `weight`, `Category`, `reviews` FROM `products` WHERE `id` = ?', [productId], (err, results) => {
+  pool.query('SELECT `id`, `name`, `price`, `image`, `date`, `stock`, `weight`, `Category` FROM `products` WHERE `id` = ?', [productId], (err, results) => {
     if (err) {
       console.error('Error retrieving product:', err);
       res.sendStatus(500);
@@ -338,7 +338,7 @@ app.delete('/user/:id', (req, res) => {
 //single user
 app.get('/user/:id', (req, res) => {
   const userid = req.params.id;
-  pool.query('SELECT `id`, `name`, `email`, `password`, `role`, `orders` FROM `users` WHERE `id` = ?', [userid], (err, results) => {
+  pool.query('SELECT `id`, `name`, `email`, `password`, `role` FROM `users` WHERE `id` = ?', [userid], (err, results) => {
     if (err) {
       console.error('Error retrieving product:', err);
       res.sendStatus(500);
