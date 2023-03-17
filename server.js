@@ -590,6 +590,65 @@ app.put('/reviews/:userId/:prId', (req, res) => {
 
 
 
+//create coupons
+app.post('/coupons', (req, res) => {
+  const coupon = {
+    cuponcode: req.body.cuponcode,
+    value: req.body.value,
+    price: req.body.price
+  };
+
+  // Insert the coupon into the database
+  pool.query('INSERT INTO cupon SET ?', coupon, (error, results, fields) => {
+    if (error) throw error;
+    res.send('Coupon created successfully.');
+  });
+});
+
+// Get all coupon codes
+app.get('/coupons', (req, res) => {
+  pool.query('SELECT * FROM cupon', (error, results, fields) => {
+    if (error) throw error;
+    res.send(results);
+  });
+});
+
+// Get a specific coupon code by ID
+app.get('/coupons/:id', (req, res) => {
+  const id = req.params.id;
+  pool.query('SELECT * FROM cupon WHERE id = ?', id, (error, results, fields) => {
+    if (error) throw error;
+    res.send(results[0]);
+  });
+});
+
+// Update a coupon code
+app.put('/coupons/:id', (req, res) => {
+  const id = req.params.id;
+  const coupon = {
+    cuponcode: req.body.cuponcode,
+    value: req.body.value,
+    price: req.body.price
+  };
+
+  // Update the coupon in the database
+  pool.query('UPDATE cupon SET ? WHERE id = ?', [coupon, id], (error, results, fields) => {
+    if (error) throw error;
+    res.send('Coupon updated successfully.');
+  });
+});
+
+// Delete a coupon code
+app.delete('/coupons/:id', (req, res) => {
+  const id = req.params.id;
+
+  // Delete the coupon from the database
+  pool.query('DELETE FROM cupon WHERE id = ?', id, (error, results, fields) => {
+    if (error) throw error;
+    res.send('Coupon deleted successfully.');
+  });
+});
+
 
 
 
