@@ -399,7 +399,7 @@ app.get('/users', (req, res) => {
 //cart 
 app.post('/add-to-cart', (req, res) => {
   console.log(req.body)
-  const { pr_name, pr_price, pr_que, pr_id, pr_img, user_id } = req.body;
+  const { pr_name, pr_price, pr_que, pr_id, pr_img,pr_weight, user_id } = req.body;
 
   // check if a row already exists for the given pr_id and user_id combination
   pool.query(
@@ -426,8 +426,8 @@ app.post('/add-to-cart', (req, res) => {
       } else {
         // insert a new row for the product in the cart table
         pool.query(
-          'INSERT INTO cart (pr_name, pr_price, pr_que, pr_id, pr_img, user_id) VALUES (?, ?, ?, ?, ?, ?)',
-          [pr_name, pr_price, pr_que, pr_id, pr_img, user_id],
+          'INSERT INTO cart (pr_name, pr_price, pr_que, pr_id, pr_img,pr_weight, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [pr_name, pr_price, pr_que, pr_id, pr_img,pr_weight, user_id],
           (error, results, fields) => {
             if (error) {
               console.error(error);
