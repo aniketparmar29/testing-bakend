@@ -664,7 +664,7 @@ app.get('/slider', (req, res) => {
 }); 
 
  // Create new slider data  
- router.post('/slider', (req, res) => {
+ app.post('/slider', (req, res) => {
 
   let sqlQuery = `INSERT INTO slider SET ?`;
 
@@ -680,7 +680,7 @@ app.get('/slider', (req, res) => {
 });
 
 // Delete existing slider data  
-router.delete('/slider/:id', (req, res) => {
+app.delete('/slider/:id', (req, res) => {
 
   let sqlQuery = `DELETE FROM slider WHERE id=${req.params.id}`;
 
@@ -690,7 +690,7 @@ router.delete('/slider/:id', (req, res) => {
 
       res.send({message: 'Slider deleted successfully!'});    												                                                                                                                            });  
 }); 
-module.exports = router;
+
 
 
 
