@@ -59,7 +59,6 @@ pool.getConnection(function(err, connection) {
 
   //create product
   app.post('/products/new', (req, res) => {
-    console.log('Request Body:', req.body);
   
     const { name, price, stock, image, weight, Category } = req.body;
     if (!name || !price || !stock || !image || !weight || !Category) { // check if any required field is missing
@@ -649,8 +648,49 @@ app.delete('/coupons/:id', (req, res) => {
   });
 });
 
+//get slider
+app.get('/slider', (req, res) => {
 
+  // Query to get slider data from database 
+  let sql = `SELECT * FROM slider ORDER BY id DESC`;
 
+  pool.query(sql, (err, results) => {
+
+      if(err) throw err;
+
+      res.json(results);
+
+  }); 
+}); 
+
+ // Create new slider data  
+ router.post('/slider', (req, res) => {
+
+  let sqlQuery = `INSERT INTO slider SET ?`;
+
+  let data = {url: req.body.url};
+
+  db.query(sqlQuery, data, (err, result) => {
+
+      if(err) throw err;
+
+      res.send({message: 'Slider created successfully!'});
+
+  });  
+});
+
+// Delete existing slider data  
+router.delete('/slider/:id', (req, res) => {
+
+  let sqlQuery = `DELETE FROM slider WHERE id=${req.params.id}`;
+
+  db.query(sqlQuery, (err, result) => {
+
+      if(err) throw err;
+
+      res.send({message: 'Slider deleted successfully!'});    												                                                                                                                            });  
+}); 
+module.exports = router;
 
 
 
