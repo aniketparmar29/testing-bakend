@@ -425,8 +425,8 @@ app.post('/add-to-cart', (req, res) => {
       } else {
         // insert a new row for the product in the cart table
         pool.query(
-          'INSERT INTO cart (pr_name, pr_price, pr_que, pr_id, pr_img,pr_category,pr_weight, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [pr_name, pr_price, pr_que, pr_id, pr_img,pr_weight, user_id],
+          'INSERT INTO cart (pr_name, pr_price, pr_que, pr_id, pr_img,pr_category,pr_weight, user_id) VALUES (?, ?, ?, ?, ?, ?, ?,?)',
+          [pr_name, pr_price, pr_que, pr_id, pr_img,pr_category,pr_weight, user_id],
           (error, results, fields) => {
             if (error) {
               console.error(error);
