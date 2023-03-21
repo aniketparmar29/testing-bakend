@@ -670,7 +670,7 @@ app.get('/slider', (req, res) => {
 
   let data = {url: req.body.url};
 
-  db.query(sqlQuery, data, (err, result) => {
+  pool.query(sqlQuery, data, (err, result) => {
 
       if(err) throw err;
 
@@ -684,7 +684,7 @@ app.delete('/slider/:id', (req, res) => {
 
   let sqlQuery = `DELETE FROM slider WHERE id=${req.params.id}`;
 
-  db.query(sqlQuery, (err, result) => {
+  pool.query(sqlQuery, (err, result) => {
 
       if(err) throw err;
 
