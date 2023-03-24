@@ -525,7 +525,24 @@ app.post('/reviews/new', (req, res) => {
   );
 });
 
+// get all reviews
+app.get('/reviews', (req, res) => {
+
+
+  pool.query(`SELECT * FROM reviews `, (err, results) => {
+    if (err) {
+      console.error('Error retrieving users:', err);
+      res.sendStatus(500);
+      return;
+    }
+    res.json(results);
+  });
+});
+
+
+
 // get reviews
+
 app.get('/reviews/:pr_id', (req, res) => {
   const pr_id = req.params.pr_id;
 
