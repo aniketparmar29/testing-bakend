@@ -531,7 +531,7 @@ app.get('/reviews', (req, res) => {
 
   pool.query(`SELECT * FROM reviews `, (err, results) => {
     if (err) {
-      console.error('Error retrieving users:', err);
+      console.error('Error retrieving reviews:', err);
       res.sendStatus(500);
       return;
     }
