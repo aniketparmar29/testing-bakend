@@ -508,12 +508,12 @@ app.put('/cart/:userId/:prId', (req, res) => {
 
 
 app.post('/reviews/new', (req, res) => {
-  const { user_name, rating, review, pr_id, user_id } = req.body;
+  const { user_name, rating, review, pr_id, pr_name, user_id } = req.body;
 
   // insert the item into the cart table
   pool.query(
-    'INSERT INTO reviews (user_name, rating, review, pr_id, user_id) VALUES (?, ?, ?, ?, ?)',
-    [user_name,rating,review, pr_id, user_id],
+    'INSERT INTO reviews (user_name, rating, review, pr_id, pr_name, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+    [user_name,rating,review, pr_id, pr_name, user_id],
     (error, results, fields) => {
       if (error) {
         console.error(error);
