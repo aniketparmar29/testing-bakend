@@ -106,7 +106,7 @@ app.get('/products/:id', (req, res) => {
   app.put('/products/:id', (req, res) => {
     const id = req.params.id;
     console.log(req.params.id)
-    const { name, price, stock, image, weight, category,reviews } = req.body;
+    const { name, price, stock, image, weight,category,reviews } = req.body;
     
     if (!name || !price || !stock || !image || !weight || !category || !reviews) { // check if any required field is missing
       res.status(400).send('Missing required fields');
