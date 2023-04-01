@@ -106,9 +106,9 @@ app.get('/products/:id', (req, res) => {
   app.put('/products/:id', (req, res) => {
     const id = req.params.id;
     console.log(req.params.id)
-    const { name, price, stock, image, weight,category,reviews } = req.body;
+    const { name, price, stock,weight } = req.body;
     
-    if (!name || !price || !stock || !image || !weight || !category || !reviews) { // check if any required field is missing
+    if (!name || !price || !stock || !weight ) { // check if any required field is missing
       res.status(400).send('Missing required fields');
       return;
     }
@@ -124,14 +124,7 @@ app.get('/products/:id', (req, res) => {
       updateFields += 'price = ?, ';
       updateParams.push(price);
     }
-    if (image) {
-      updateFields += 'image = ?, ';
-      updateParams.push(image);
-    }
-    if (date) {
-      updateFields += 'date = ?, ';
-      updateParams.push(date);
-    }
+
     if (stock) {
       updateFields += 'stock = ?, ';
       updateParams.push(stock);
@@ -139,14 +132,6 @@ app.get('/products/:id', (req, res) => {
     if (weight) {
       updateFields += 'weight = ?, ';
       updateParams.push(weight);
-    }
-    if (category) {
-      updateFields += 'category = ?, ';
-      updateParams.push(category);
-    }
-    if (reviews) {
-      updateFields += 'reviews = ?, ';
-      updateParams.push(reviews);
     }
   
     // remove trailing comma
