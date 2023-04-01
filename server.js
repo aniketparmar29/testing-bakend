@@ -105,7 +105,8 @@ app.get('/products/:id', (req, res) => {
   ///update product
   app.put('/products/:id', (req, res) => {
     const id = req.params.id;
-    console.log(req.params.id)
+    console.log(req.body)
+
     const { name, price, stock,weight } = req.body;
     
     if (!name || !price || !stock || !weight ) { // check if any required field is missing
