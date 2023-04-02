@@ -109,10 +109,7 @@ app.get('/products/:id', (req, res) => {
 
     const { name, price, stock,weight } = req.body;
     
-    if (!name || !price || !stock || !weight ) { // check if any required field is missing
-      res.status(400).send('Missing required fields');
-      return;
-    }
+    
   
     let updateFields = '';
     const updateParams = [];
