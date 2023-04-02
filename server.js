@@ -96,7 +96,7 @@ app.get('/products/:id', (req, res) => {
       res.sendStatus(404); // return a 404 status code if the product is not found
       return;
     }
-    res.json(results[0]); // return the first product in the array
+    res.json(results[0]); 
   });
 });
 
@@ -108,9 +108,6 @@ app.get('/products/:id', (req, res) => {
     console.log(req.body)
 
     const { name, price, stock,weight } = req.body;
-    
-    
-  
     let updateFields = '';
     const updateParams = [];
     
