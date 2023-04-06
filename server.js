@@ -322,7 +322,7 @@ app.post('/login', (req, res) => {
   });
 });
 
-//delete user
+//delete user 
 app.delete('/user/:id', (req, res) => {
   const userid = req.params.id;
 
