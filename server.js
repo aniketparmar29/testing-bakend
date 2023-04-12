@@ -84,6 +84,7 @@ app.post('/create-checkout-session', async (req, res) => {
   })
 
   const session = await stripe.checkout.sessions.create({
+    shipping_address_collection: {allowed_countries: ['IN','US']},
     shipping_options: [
       {
         shipping_rate_data: {
