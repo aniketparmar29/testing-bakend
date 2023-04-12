@@ -109,7 +109,7 @@ app.post('/create-checkout-session', async (req, res) => {
         },
       },
     ],
-    phone_number_collections:{
+    phone_number_collection:{
       enabled:true
     },
     line_items,
