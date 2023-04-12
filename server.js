@@ -7,14 +7,17 @@ const cors = require('cors');
 const dotenv = require("dotenv");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const Stripe = require('stripe');
+
 
 dotenv.config({path:"./config.env"})
 
 // app.use(cors({
-//   origin: ['http://localhost:3000',''],
-//   credentials: true,
-// }));
-
+  //   origin: ['http://localhost:3000',''],
+  //   credentials: true,
+  // }));
+  
+const stripe = Stripe(process.env.STRIPE_KEY)
 
 app.use(cors())
 
@@ -56,6 +59,34 @@ pool.getConnection(function(err, connection) {
       console.log("connection to mysql");
     });
   });
+
+
+//stripe
+
+app.post('/create-checkout-session', async (req, res) => {
+  const session = await stripe.checkout.sessions.create({
+    line_items: [
+      {
+        price_data: {
+          currency: 'inr',
+          product_data: {
+            name: 'T-shirt',
+          },
+          unit_amount: 2000,
+        },
+        quantity: 1,
+      },
+    ],
+    mode: 'payment',
+    success_url: `${process.env.CLIENT_URL}/checkout-success`,
+    cancel_url: `${process.env.CLIENT_URL}/cart`,
+  });
+
+  res.send({url: session.url}); 
+});
+
+
+
 
   //create product
   app.post('/products/new', (req, res) => {
@@ -687,6 +718,8 @@ app.delete('/slider/:id', (req, res) => {
 
       res.send({message: 'Slider deleted successfully!'});    												                                                                                                                            });  
 }); 
+
+
 
 
 
