@@ -77,7 +77,7 @@ app.post('/create-checkout-session', async (req, res) => {
             weight:item.pr_weight
           }
         },
-        unit_amount: item.pr_price,
+        unit_amount: item.pr_price*100,
       },
       quantity: item.pr_que,
     }
