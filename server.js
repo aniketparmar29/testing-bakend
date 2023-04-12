@@ -64,19 +64,27 @@ pool.getConnection(function(err, connection) {
 //stripe
 
 app.post('/create-checkout-session', async (req, res) => {
-  const session = await stripe.checkout.sessions.create({
-    line_items: [
-      {
-        price_data: {
-          currency: 'inr',
-          product_data: {
-            name: 'T-shirt',
-          },
-          unit_amount: 2000,
+
+  const line_items  = req.body.cartItems.map(item =>{
+    return {
+      price_data: {
+        currency: 'inr',
+        product_data: {
+          name: item.pr_name,
+          images:[item.pr_img],
+          metadata:{
+            id:item.pr_id,
+            weight:item.pr_weight
+          }
         },
-        quantity: 1,
+        unit_amount: item.pr_price,
       },
-    ],
+      quantity: item.pr_que,
+    }
+  })
+
+  const session = await stripe.checkout.sessions.create({
+    line_items,
     mode: 'payment',
     success_url: `${process.env.CLIENT_URL}/checkout-success`,
     cancel_url: `${process.env.CLIENT_URL}/cart`,
