@@ -7,7 +7,7 @@ const cors = require('cors');
 const dotenv = require("dotenv");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const request = require('request');
 
 dotenv.config({path:"./config.env"})
 
@@ -59,7 +59,80 @@ pool.getConnection(function(err, connection) {
   });
 
 
-//stripe
+
+
+  app.post('/create_order', (req, res) => {
+    console.log(req.body)
+      const data = {
+          key: process.env.API_KEY,
+          client_txn_id: req.body.client_txn_id,
+          amount: req.body.amount,
+          p_info: req.body.p_info,
+          customer_name: req.body.customer_name,
+          customer_email: req.body.customer_email,
+          customer_mobile: req.body.customer_mobile,
+          udf1: req.body.udf1,
+          udf2: req.body.udf2,
+          udf3: req.body.udf3
+      };
+  
+      request.post({
+          url: 'https://merchant.upigateway.com/api/create_order',
+          json: data
+      }, (error, response, body) => {
+          if (error) {
+              return res.status(500).json({
+                  status: false,
+                  msg: 'Internal Server Error'
+              });
+          }
+  
+          if (!body.status) {
+              return res.status(400).json({
+                  status: false,
+                  msg: body.msg
+              });
+          }
+  
+          const orderId = body.data.order_id;
+          const paymentUrl = body.data.payment_url;
+  
+          // Save order details to MySQL database
+          pool.query('INSERT INTO orders SET ?', {
+              order_id: orderId,
+              client_txn_id: req.body.client_txn_id,
+              amount: req.body.amount,
+              p_info: req.body.p_info,
+              customer_name: req.body.customer_name,
+              customer_email: req.body.customer_email,
+              customer_mobile: req.body.customer_mobile,
+              redirect_url: www.loca,
+              udf1: req.body.udf1,
+              udf2: req.body.udf2,
+              udf3: req.body.udf3
+          }, (err, result) => {
+              if (err) {
+                  return res.status(500).json({
+                      status: false,
+                      msg: 'Internal Server Error'
+                  });
+              }
+  
+              // Send payment URL to client
+              res.json({
+                  status: true,
+                  msg: 'Order Created',
+                  data: {
+                      order_id: orderId,
+                      payment_url: paymentUrl
+                  }
+              });
+          });
+      });
+  });
+  
+
+
 
 
 
@@ -382,6 +455,8 @@ app.get('/users', (req, res) => {
     res.json(results);
   });
 });
+
+
 
 //cart 
 app.post('/add-to-cart', (req, res) => {
