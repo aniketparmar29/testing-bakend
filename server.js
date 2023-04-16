@@ -544,6 +544,23 @@ app.delete('/cart/:userId/:prId', (req, res) => {
   });
 });
 
+
+app.delete('/cart/:userId', (req, res) => {
+  const userId = req.params.userId;
+
+  pool.query('DELETE FROM cart WHERE user_id = ?', [userId], (error, results) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send('Error deleting items from cart');
+      return;
+    }
+
+    res.send(`Cart cleared for user with user_id ${userId}`);
+  });
+});
+
+
+
 //update_cart
 
 app.put('/cart/:userId/:prId', (req, res) => {
