@@ -320,10 +320,10 @@ app.post('/register', (req, res) => {
       }
 
       const role = 'user';
-
+      const address =0;
       // Insert new user into MySQL database
-      const insertUserSql = 'INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)';
-      const insertUserValues = [email, hash, name, role];
+      const insertUserSql = 'INSERT INTO users (email, password, name, role, address) VALUES (?, ?, ?, ?, ?)';
+      const insertUserValues = [email, hash, name, role,address];
 
       pool.query(insertUserSql, insertUserValues, (error, results) => {
         if (error) {
