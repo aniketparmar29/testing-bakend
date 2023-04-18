@@ -392,7 +392,6 @@ app.post('/login', (req, res) => {
           email: user.email,
           name: user.name,
           role: user.role,
-          address:user.address
         },
         token
       });
@@ -433,22 +432,6 @@ app.get('/user/:id', (req, res) => {
     }
     res.json(results[0]); // return the first product in the array
   });
-});
-
-//adress of user
-
-app.put('/users/:id', (req, res) => {
-  const userId = req.params.id;
-  const { address } = req.body;
-
-  pool.query(
-    'UPDATE users SET address = ? WHERE id = ?',
-    [address, userId],
-    (error, results, fields) => {
-      if (error) throw error;
-      res.send(`User ${userId} address updated`);
-    }
-  );
 });
 
 
