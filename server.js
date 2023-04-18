@@ -434,6 +434,23 @@ app.get('/user/:id', (req, res) => {
   });
 });
 
+//adress of user
+
+app.put('/users/:id', (req, res) => {
+  const userId = req.params.id;
+  const { address } = req.body;
+
+  pool.query(
+    'UPDATE users SET address = ? WHERE id = ?',
+    [address, userId],
+    (error, results, fields) => {
+      if (error) throw error;
+      res.send(`User ${userId} address updated`);
+    }
+  );
+});
+
+
 //get all users
 
 app.get('/users', (req, res) => {
