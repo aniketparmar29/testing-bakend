@@ -61,7 +61,6 @@ pool.getConnection(function(err, connection) {
 
 
   app.post('/create_order', (req, res) => {
-    console.log(req.body);
 
     const data = {
       key: process.env.API_KEY,
@@ -76,7 +75,6 @@ pool.getConnection(function(err, connection) {
       udf2: "user defined field 2 (max 25 char)",
       udf3: "user defined field 3 (max 25 char)"
     };
-    console.log(data);
 
     request.post({
       url: "https://merchant.upigateway.com/api/create_order",
@@ -107,6 +105,14 @@ pool.getConnection(function(err, connection) {
         let amount= req.body.amount
         let  product= req.body.products
         let user_id= req.body.user_id
+        let trx_id=req.body.client_txn_id;
+        const today = new Date();
+const day = String(today.getDate()).padStart(2, '0');
+const month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+const year = today.getFullYear();
+const formattedDate = `${day}/${month}/${year}`;
+
+        let trx_date=formattedDate;
         let tracking_id= 0
       
 
@@ -121,8 +127,8 @@ pool.getConnection(function(err, connection) {
       });
 
       pool.query(
-        'INSERT INTO `orders` (`addressop`, `amount`, `product`, `user_id`, `tracking_id`) VALUES (?, ?, ?, ?, ?)',
-        [addressop, amount, product, user_id, tracking_id], (err, result) => {
+        'INSERT INTO `orders` (`addressop`, `amount`, `product`, `user_id`, `tracking_id`,`trx_id`,`trx_date`) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [addressop, amount, product, user_id, tracking_id,trx_id,trx_date], (err, result) => {
         if (err) {
           console.error(err);
           return res.status(500).json({
