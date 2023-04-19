@@ -68,6 +68,7 @@ pool.getConnection(function(err, connection) {
           client_txn_id: req.body.client_txn_id,
           amount: req.body.amount,
           p_info: req.body.products,
+          redirect_url:"http://localhost:3000/checkoutsuccess",
           customer_name: req.body.customer_name,
           customer_email: req.body.customer_email,
           customer_mobile: req.body.customer_mobile,
