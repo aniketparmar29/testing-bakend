@@ -107,11 +107,10 @@ pool.getConnection(function(err, connection) {
         let user_id= req.body.user_id
         let trx_id=req.body.client_txn_id;
         const today = new Date();
-const day = String(today.getDate()).padStart(2, '0');
-const month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
-const year = today.getFullYear();
-const formattedDate = `${day}/${month}/${year}`;
-
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+        const year = today.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
         let trx_date=formattedDate;
         let tracking_id= 0
       
