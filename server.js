@@ -67,13 +67,13 @@ pool.getConnection(function(err, connection) {
           key: process.env.API_KEY,
           client_txn_id: req.body.client_txn_id,
           amount: req.body.amount,
-          p_info: req.body.p_info,
+          p_info: req.body.products,
           customer_name: req.body.customer_name,
           customer_email: req.body.customer_email,
           customer_mobile: req.body.customer_mobile,
-          udf1: req.body.udf1,
-          udf2: req.body.udf2,
-          udf3: req.body.udf3
+          udf1: "udf",
+          udf2: "udf",
+          udf3: "udf"
       };
   
       request.post({
@@ -99,17 +99,11 @@ pool.getConnection(function(err, connection) {
   
           // Save order details to MySQL database
           pool.query('INSERT INTO orders SET ?', {
-              order_id: orderId,
-              client_txn_id: req.body.client_txn_id,
-              amount: req.body.amount,
-              p_info: req.body.p_info,
-              customer_name: req.body.customer_name,
-              customer_email: req.body.customer_email,
-              customer_mobile: req.body.customer_mobile,
-              redirect_url: www.loca,
-              udf1: req.body.udf1,
-              udf2: req.body.udf2,
-              udf3: req.body.udf3
+             address:req.body.address,
+             amount:req.body.amount,
+             products:req.body.products,
+             user_id:req.body.user_id,
+             trackingid:0
           }, (err, result) => {
               if (err) {
                   return res.status(500).json({
