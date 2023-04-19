@@ -62,12 +62,12 @@ pool.getConnection(function(err, connection) {
 
   app.post('/create_order', (req, res) => {
     console.log(req.body);
-  
+
     const data = {
       key: process.env.API_KEY,
       client_txn_id: req.body.client_txn_id,
       amount: req.body.amount,
-      p_info: req.body.products,
+      p_info: "products",
       redirect_url: "https://hathibrand.in/checkoutsuccess",
       customer_name: req.body.customer_name,
       customer_email: req.body.customer_email,
@@ -77,6 +77,7 @@ pool.getConnection(function(err, connection) {
       udf3: "user defined field 3 (max 25 char)"
     };
     console.log(data);
+
     request.post({
       url: "https://merchant.upigateway.com/api/create_order",
       json: data
@@ -88,7 +89,7 @@ pool.getConnection(function(err, connection) {
           msg: "Internal Server Error"
         });
       }
-  
+
       if (!body.status) {
         console.error(body.msg);
         return res.status(400).json({
@@ -96,19 +97,32 @@ pool.getConnection(function(err, connection) {
           msg: body.msg
         });
       }
-  
+
       const orderId = body.data.order_id;
       const paymentUrl = body.data.payment_url;
-  
+
       // Save order details to MySQL database
-      const orderData = {
-        address: req.body.address,
-        amount: req.body.amount,
-        products: req.body.products,
-        user_id: req.body.user_id,
-        tracking_id: 0
-      };
-      pool.query("INSERT INTO orders SET ?", orderData, (err, result) => {
+      
+        let addressop= req.body.addressop
+        let amount= req.body.amount
+        let  product= req.body.products
+        let user_id= req.body.user_id
+        let tracking_id= 0
+      
+
+      // Send payment URL to client before saving order details to MySQL database
+      res.json({
+        status: true,
+        msg: "Order Created",
+        data: {
+          order_id: orderId,
+          payment_url: paymentUrl
+        }
+      });
+
+      pool.query(
+        'INSERT INTO `orders` (`addressop`, `amount`, `product`, `user_id`, `tracking_id`) VALUES (?, ?, ?, ?, ?)',
+        [addressop, amount, product, user_id, tracking_id], (err, result) => {
         if (err) {
           console.error(err);
           return res.status(500).json({
@@ -116,19 +130,16 @@ pool.getConnection(function(err, connection) {
             msg: "Internal Server Error"
           });
         }
-  
-        // Send payment URL to client
-        res.json({
-          status: true,
-          msg: "Order Created",
-          data: {
-            order_id: orderId,
-            payment_url: paymentUrl
-          }
-        });
+
+        
+        
+
+        console.log("Order details saved to MySQL database");
       });
     });
   });
+
+  
   
 
 
