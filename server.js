@@ -62,69 +62,75 @@ pool.getConnection(function(err, connection) {
 
 
   app.post('/create_order', (req, res) => {
-    console.log(req.body)
-      const data = {
-          key: process.env.API_KEY,
-          client_txn_id: req.body.client_txn_id,
-          amount: req.body.amount,
-          p_info: req.body.products,
-          redirect_url:"http://localhost:3000/checkoutsuccess",
-          customer_name: req.body.customer_name,
-          customer_email: req.body.customer_email,
-          customer_mobile: req.body.customer_mobile,
-          udf1: "udf",
-          udf2: "udf",
-          udf3: "udf"
+    console.log(req.body);
+  
+    const data = {
+      key: process.env.API_KEY,
+      client_txn_id: req.body.client_txn_id,
+      amount: req.body.amount,
+      p_info: req.body.products,
+      redirect_url: "https://hathibrand.in/checkoutsuccess",
+      customer_name: req.body.customer_name,
+      customer_email: req.body.customer_email,
+      customer_mobile: req.body.customer_mobile,
+      udf1: "user defined field 1 (max 25 char)",
+      udf2: "user defined field 2 (max 25 char)",
+      udf3: "user defined field 3 (max 25 char)"
+    };
+  
+    request.post({
+      url: "https://merchant.upigateway.com/api/create_order",
+      json: data
+    }, (error, response, body) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({
+          status: false,
+          msg: "Internal Server Error"
+        });
+      }
+  
+      if (!body.status) {
+        console.error(body.msg);
+        return res.status(400).json({
+          status: false,
+          msg: body.msg
+        });
+      }
+  
+      const orderId = body.data.order_id;
+      const paymentUrl = body.data.payment_url;
+  
+      // Save order details to MySQL database
+      const orderData = {
+        address: req.body.address,
+        amount: req.body.amount,
+        products: req.body.products,
+        user_id: req.body.user_id,
+        trackingid: 0
       };
-  
-      request.post({
-          url: 'https://merchant.upigateway.com/api/create_order',
-          json: data
-      }, (error, response, body) => {
-          if (error) {
-              return res.status(500).json({
-                  status: false,
-                  msg: 'Internal Server Error'
-              });
-          }
-  
-          if (!body.status) {
-              return res.status(400).json({
-                  status: false,
-                  msg: body.msg
-              });
-          }
-  
-          const orderId = body.data.order_id;
-          const paymentUrl = body.data.payment_url;
-  
-          // Save order details to MySQL database
-          pool.query('INSERT INTO orders SET ?', {
-             address:req.body.address,
-             amount:req.body.amount,
-             products:req.body.products,
-             user_id:req.body.user_id,
-             trackingid:0
-          }, (err, result) => {
-              if (err) {
-                  return res.status(500).json({
-                      status: false,
-                      msg: 'Internal Server Error'
-                  });
-              }
-  
-              // Send payment URL to client
-              res.json({
-                  status: true,
-                  msg: 'Order Created',
-                  data: {
-                      order_id: orderId,
-                      payment_url: paymentUrl
-                  }
-              });
+      pool.query("INSERT INTO orders SET ?", orderData, (err, result) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({
+            status: false,
+            msg: "Internal Server Error"
           });
+        }
+  
+        // Send payment URL to client
+        res.json({
+          status: true,
+          msg: "Order Created",
+          data: {
+            order_id: orderId,
+            payment_url: paymentUrl
+          }
+        });
       });
+    });
   });
+  
   
 
 
