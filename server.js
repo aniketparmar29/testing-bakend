@@ -60,7 +60,6 @@ pool.getConnection(function(err, connection) {
 
 
 
-
   app.post('/create_order', (req, res) => {
     console.log(req.body);
   
@@ -77,7 +76,7 @@ pool.getConnection(function(err, connection) {
       udf2: "user defined field 2 (max 25 char)",
       udf3: "user defined field 3 (max 25 char)"
     };
-  
+    console.log(data);
     request.post({
       url: "https://merchant.upigateway.com/api/create_order",
       json: data
@@ -107,7 +106,7 @@ pool.getConnection(function(err, connection) {
         amount: req.body.amount,
         products: req.body.products,
         user_id: req.body.user_id,
-        trackingid: 0
+        tracking_id: 0
       };
       pool.query("INSERT INTO orders SET ?", orderData, (err, result) => {
         if (err) {
@@ -130,7 +129,6 @@ pool.getConnection(function(err, connection) {
       });
     });
   });
-  
   
 
 
