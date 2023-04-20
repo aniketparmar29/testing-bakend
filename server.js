@@ -116,7 +116,6 @@ pool.getConnection(function(err, connection) {
         let payment=false     
         let status="pending" 
 
-      // Send payment URL to client before saving order details to MySQL database
       res.json({
         status: true,
         msg: "Order Created",
