@@ -113,7 +113,8 @@ pool.getConnection(function(err, connection) {
         const formattedDate = `${day}/${month}/${year}`;
         let trx_date=formattedDate;
         let tracking_id= 0
-        let payment=false      
+        let payment=false     
+        let status="pending" 
 
       // Send payment URL to client before saving order details to MySQL database
       res.json({
@@ -126,8 +127,8 @@ pool.getConnection(function(err, connection) {
       });
 
       pool.query(
-        'INSERT INTO `orders` (`addressop`, `amount`, `product`, `user_id`, `tracking_id`,`trx_id`,`trx_date`,`payment`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [addressop, amount, product, user_id, tracking_id,trx_id,trx_date,payment], (err, result) => {
+        'INSERT INTO `orders` (`addressop`, `amount`, `product`, `user_id`, `tracking_id`,`trx_id`,`trx_date`,`payment`,`status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [addressop, amount, product, user_id, tracking_id,trx_id,trx_date,payment,status], (err, result) => {
         if (err) {
           console.error(err);
           return res.status(500).json({
