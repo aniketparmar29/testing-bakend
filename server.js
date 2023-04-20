@@ -60,7 +60,7 @@ pool.getConnection(function(err, connection) {
 
 
 
-  app.post('/create_order', (req, res) => {
+  app.post('/payment_order', (req, res) => {
     const data = {
       key: process.env.API_KEY,
       client_txn_id: req.body.client_txn_id,
@@ -112,15 +112,6 @@ pool.getConnection(function(err, connection) {
       let payment = false;
       let status = "pending";
   
-      res.json({
-        status: true,
-        msg: "Order Created",
-        data: {
-          order_id: orderId,
-          payment_url: paymentUrl
-        }
-      });
-  
       pool.query(
         'INSERT INTO `orders` (`addressop`, `amount`, `product`, `user_id`, `tracking_id`,`trx_id`,`trx_date`,`payment`,`status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [addressop, amount, product, user_id, tracking_id, trx_id, trx_date, payment, status], (err, result) => {
@@ -133,6 +124,15 @@ pool.getConnection(function(err, connection) {
         }
   
         console.log("Order details saved to MySQL database");
+  
+        res.json({
+          status: true,
+          msg: "Payment Order Created",
+          data: {
+            order_id: orderId,
+            payment_url: paymentUrl
+          }
+        });
       });
     });
   });
