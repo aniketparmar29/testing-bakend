@@ -60,7 +60,7 @@ pool.getConnection(function(err, connection) {
 
 
 
-  app.post('/payment_order', (req, res) => {
+  app.post('/create_order', (req, res) => {
     const data = {
       key: process.env.API_KEY,
       client_txn_id: req.body.client_txn_id,
