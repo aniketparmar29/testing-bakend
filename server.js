@@ -173,7 +173,20 @@ pool.getConnection(function(err, connection) {
   });
   
 
-
+  app.put('/orders/payment/:trx_id', (req, res) => {
+    const trx_id = req.params.trx_id;
+    const payment = req.body.payment;
+  
+    // execute the SQL query to update the payment status of the order
+    pool.query('UPDATE `orders` SET `payment` = ? WHERE `trx_id` = ?', [payment, trx_id], (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        res.status(500).send('Error updating payment status');
+      } else {
+        res.status(200).send('Payment status updated successfully');
+      }
+    });
+  });
 
 
 
