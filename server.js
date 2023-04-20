@@ -126,7 +126,7 @@ pool.getConnection(function(err, connection) {
       });
 
       pool.query(
-        'INSERT INTO `orders` (`addressop`, `amount`, `product`, `user_id`, `tracking_id`,`trx_id`,`trx_date`,`payment`) VALUES (?, ?, ?, ?, ?, ?, ?,?)',
+        'INSERT INTO `orders` (`addressop`, `amount`, `product`, `user_id`, `tracking_id`,`trx_id`,`trx_date`,`payment`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [addressop, amount, product, user_id, tracking_id,trx_id,trx_date,payment], (err, result) => {
         if (err) {
           console.error(err);
