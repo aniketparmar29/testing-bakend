@@ -139,8 +139,39 @@ pool.getConnection(function(err, connection) {
   
 
   
+  app.post('/check_order', (req, res) => {
+    const data = {
+      key: process.env.API_KEY,
+      client_txn_id: req.body.client_txn_id,
+      txn_date: req.body.txn_date
+    };
+    console.log(data);
+    request.post({
+      url: "https://merchant.upigateway.com/api/check_order_status",
+      json: data
+    }, (error, response, body) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({
+          status: false,
+          msg: "Internal Server Error"
+        });
+      }
   
-
+      if (!body.status) {
+        console.error(body.msg);
+        return res.status(400).json({
+          status: false,
+          msg: body.msg
+        });
+      }
+  
+      console.log(body);
+      // Success response
+      return res.status(200).json(body);
+    });
+  });
+  
 
 
 
