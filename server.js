@@ -97,8 +97,6 @@ pool.getConnection(function(err, connection) {
   
       const orderId = body.data.order_id;
       const paymentUrl = body.data.payment_url;
-  
-      // Save order details to MySQL database
       let addressop = req.body.addressop;
       let amount = req.body.amount;
       let product = req.body.products;
