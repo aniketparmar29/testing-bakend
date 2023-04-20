@@ -193,7 +193,7 @@ pool.getConnection(function(err, connection) {
     var user_id = req.params.id;
     pool.query('SELECT * FROM orders WHERE user_id = ?', [user_id], function(error, results, fields) {
       if (error) throw error;
-      res.send(results[0]);
+      res.send(results);
     });
   });
   
