@@ -188,22 +188,20 @@ pool.getConnection(function(err, connection) {
     });
   });
 
-
   app.get('/orders/:id', function(req, res) {
     var user_id = req.params.id;
-    pool.query('SELECT * FROM orders WHERE user_id = ?', [user_id], function(error, results, fields) {
+    pool.query('SELECT * FROM orders WHERE user_id = ? ORDER BY trx_date DESC', [user_id], function(error, results, fields) {
       if (error) throw error;
       res.send(results);
     });
   });
   
   app.get('/orders', function(req, res) {
-    pool.query('SELECT * FROM orders', function(error, results, fields) {
+    pool.query('SELECT * FROM orders ORDER BY trx_date DESC', function(error, results, fields) {
       if (error) throw error;
       res.send(results);
     });
   });
-  
 
   //create product
   app.post('/products/new', (req, res) => {
