@@ -8,6 +8,7 @@ const dotenv = require("dotenv");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const request = require('request');
+const cookieParser = require('cookie-parser');
 
 dotenv.config({path:"./config.env"})
 
@@ -16,14 +17,11 @@ dotenv.config({path:"./config.env"})
   //   credentials: true,
   // }));
   
-
+app.use(cookieParser());
+  
 app.use(cors())
-
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-
-
 
 const pool = mysql.createPool({
 connectionLimit: 100,
@@ -39,7 +37,32 @@ connectionLimit: 100,
 // });
 
 
+function isAdmin(req, res, next) {
+  console.log(req.cookies);
+  // Check if 'cookies' property exists in the request object
+  if (!req.cookies || !req.cookies.token) {
+    res.sendStatus(401); // Token is missing, send a 401 Unauthorized status
+    return;
+  }
 
+  const token = req.cookies.token;
+
+  try {
+    // Verify the token with the secret key
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+
+    // Assuming you have a 'role' property on the decoded token
+    if (decoded.role === 'admin') {
+      req.user = decoded; // Attach the decoded user object to the request for future use
+      next(); // User is an admin, proceed to the next middleware/route handler
+    } else {
+      res.sendStatus(403); // User is not an admin, send a 403 Forbidden status
+    }
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    res.sendStatus(401); // Token verification failed, send a 401 Unauthorized status
+  }
+}
 
 
 
@@ -240,7 +263,7 @@ pool.getConnection(function(err, connection) {
     });
   });
   
-  app.get('/orders', function(req, res) {
+  app.get('/orders',isAdmin, function(req, res) {
     pool.query('SELECT * FROM orders ORDER BY trx_date DESC', function(error, results, fields) {
       if (error) throw error;
       res.send(results);
@@ -248,7 +271,7 @@ pool.getConnection(function(err, connection) {
   });
 
   //create product
-  app.post('/products/new', (req, res) => {
+  app.post('/products/new',isAdmin, (req, res) => {
   
     const { name, price, stock, image, weight, Category } = req.body;
     if (!name || !price || !stock || !image || !weight || !Category) { // check if any required field is missing
@@ -292,8 +315,9 @@ app.get('/products/:id', (req, res) => {
 
 
 
+
   ///update product
-  app.put('/products/:id', (req, res) => {
+  app.put('/products/:id',isAdmin,(req, res) => {
     const id = req.params.id;
     console.log(req.body)
 
@@ -364,25 +388,10 @@ app.get('/products/:id', (req, res) => {
     });
   });
   
-//serach product
-app.get('/search', (req, res) => {
-  const { query } = req.query;
-  pool.query(`SELECT * FROM products WHERE name LIKE '%${query}%'`, (err, results) => {
-    if (err) {
-      console.error('Error searching for products:', err);
-      res.sendStatus(500);
-      return;
-    }
-    res.json(results);
-  });
-  
-  
-});
-
 
 // delete prodocut
 
-app.delete('/products/:id', (req, res) => {
+app.delete('/products/:id', isAdmin,(req, res) => {
   const productId = req.params.id;
 
   pool.query('DELETE FROM `products` WHERE `id` = ?', [productId], (err, result) => {
@@ -454,10 +463,8 @@ app.post('/register', (req, res) => {
 });
 
 
-
-// Login route
 app.post('/login', (req, res) => {
-  console.log(req.body)
+  console.log(req.body);
   const { email, password } = req.body;
 
   // Retrieve user from MySQL database by email
@@ -477,18 +484,17 @@ app.post('/login', (req, res) => {
 
     // Compare password with hashed password using bcrypt
     const user = results[0];
-    console.log(password,user.password)
+    console.log(password, user.password);
 
-    try {
-  bcrypt.compare(password, user.password, (err, passwordMatch) => {
-    if (err || !passwordMatch) {
-      console.error('Error comparing password:', err);
-      res.sendStatus(401);
-      return;
-    }
+    bcrypt.compare(password, user.password, (err, passwordMatch) => {
+      if (err || !passwordMatch) {
+        console.error('Error comparing password:', err);
+        res.sendStatus(401);
+        return;
+      }
 
       // Generate token for user
-      const token = generateToken(user.id);
+      const token = jwt.sign({ id: user.id, role: user.role }, process.env.SECRET_KEY);
 
       // Set token as cookie in response
       res.cookie('token', token);
@@ -501,18 +507,14 @@ app.post('/login', (req, res) => {
           name: user.name,
           role: user.role,
         },
-        token
+        token,
       });
     });
-} catch (err) {
-  console.error('Error during bcrypt.compare:', err);
-  res.sendStatus(500);
-}
   });
-});
+}, isAdmin);
 
 //delete user 
-app.delete('/user/:id', (req, res) => {
+app.delete('/user/:id',isAdmin, (req, res) => {
   const userid = req.params.id;
 
   pool.query('DELETE FROM `users` WHERE `id` = ?', [userid], (err, result) => {
@@ -526,7 +528,7 @@ app.delete('/user/:id', (req, res) => {
 });
 
 //single user
-app.get('/user/:id', (req, res) => {
+app.get('/user/:id',isAdmin, (req, res) => {
   const userid = req.params.id;
   pool.query('SELECT `id`, `name`, `email`, `password`, `role` FROM `users` WHERE `id` = ?', [userid], (err, results) => {
     if (err) {
@@ -796,7 +798,7 @@ app.put('/reviews/:userId/:prId', (req, res) => {
 
 
 //create coupons
-app.post('/coupons', (req, res) => {
+app.post('/coupons',isAdmin, (req, res) => {
   const coupon = {
     cuponcode: req.body.cuponcode,
     value: req.body.value,
@@ -870,7 +872,7 @@ app.get('/slider', (req, res) => {
 }); 
 
  // Create new slider data  
- app.post('/slider', (req, res) => {
+ app.post('/slider',isAdmin, (req, res) => {
 
   let sqlQuery = `INSERT INTO slider SET ?`;
 
@@ -886,7 +888,7 @@ app.get('/slider', (req, res) => {
 });
 
 // Delete existing slider data  
-app.delete('/slider/:id', (req, res) => {
+app.delete('/slider/:id', isAdmin,(req, res) => {
 
   let sqlQuery = `DELETE FROM slider WHERE id=${req.params.id}`;
 
