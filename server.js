@@ -31,10 +31,10 @@ connectionLimit: 100,
   database: process.env.DATABASE,
 });
 
-// app.use((req, res, next) => {
-//   res.setHeader('Access-Control-Allow-Origin', 'https://hathibrand.in');
-//   next();
-// });
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://hathibrand.in');
+  next();
+});
 
 
 function isAdmin(req, res, next) {
