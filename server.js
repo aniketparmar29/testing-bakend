@@ -12,10 +12,10 @@ const cookieParser = require('cookie-parser');
 
 dotenv.config({path:"./config.env"})
 
-// app.use(cors({
-  //   origin: ['http://localhost:3000',''],
-  //   credentials: true,
-  // }));
+app.use(cors({
+    origin: ['https://hathibrand.in/'],
+    credentials: true,
+  }));
   
 app.use(cookieParser());
   
@@ -499,7 +499,7 @@ app.post('/login', (req, res) => {
       const token = jwt.sign({ id: user.id, role: user.role }, process.env.SECRET_KEY);
 
       // Set token as cookie in response
-      res.cookie('token', token, { httpOnly: true });
+      res.cookie('token', token, { httpOnly: true ,sameSite:'none',secure:true});
 
       // Send success response with user data and token
       res.json({
