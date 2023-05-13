@@ -19,7 +19,6 @@ app.use(cors({
   
 app.use(cookieParser());
   
-app.use(cors())
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -466,6 +465,7 @@ app.post('/register', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://hathibrand.in');
   console.log(req.body);
   const { email, password } = req.body;
 
