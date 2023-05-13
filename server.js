@@ -65,6 +65,9 @@ function isAdmin(req, res, next) {
 }
 
 
+app.get('/protected', isAdmin, (req, res) => {
+  res.json({ message: 'This is a protected route for admins only.' });
+});
 
 pool.getConnection(function(err, connection) {
     if (err) throw err;
@@ -462,7 +465,6 @@ app.post('/register', (req, res) => {
   });
 });
 
-
 app.post('/login', (req, res) => {
   console.log(req.body);
   const { email, password } = req.body;
@@ -497,7 +499,7 @@ app.post('/login', (req, res) => {
       const token = jwt.sign({ id: user.id, role: user.role }, process.env.SECRET_KEY);
 
       // Set token as cookie in response
-      res.cookie('token', token);
+      res.cookie('token', token, { httpOnly: true });
 
       // Send success response with user data and token
       res.json({
@@ -511,7 +513,7 @@ app.post('/login', (req, res) => {
       });
     });
   });
-}, isAdmin);
+});
 
 //delete user 
 app.delete('/user/:id',isAdmin, (req, res) => {
