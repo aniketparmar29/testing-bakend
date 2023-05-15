@@ -12,10 +12,7 @@ const cookieParser = require('cookie-parser');
 
 dotenv.config({path:"./config.env"})
 
-app.use(cors({
-    origin: ['https://hathibrand.in/'],
-    credentials: true,
-  }));
+app.use(cors());
   
 app.use(cookieParser());
   
@@ -465,7 +462,6 @@ app.post('/register', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://hathibrand.in');
   console.log(req.body);
   const { email, password } = req.body;
 
