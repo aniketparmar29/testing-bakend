@@ -262,7 +262,7 @@ pool.getConnection(function(err, connection) {
     });
   });
   
-  app.get('/orders',isAdmin, function(req, res) {
+  app.get('/orders',function(req, res) {
     pool.query('SELECT * FROM orders ORDER BY trx_date DESC', function(error, results, fields) {
       if (error) throw error;
       res.send(results);
