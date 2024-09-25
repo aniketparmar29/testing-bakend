@@ -21,14 +21,14 @@ app.use(bodyParser.json());
 
 const pool = mysql.createPool({
 connectionLimit: 100,
-  host: process.env.HOST,
-  user: process.env.USER,
-  password: process.env.PASSWORD,
-  database: process.env.DATABASE,
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'hathibrand-main',
 });
 
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://hathibrand.in');
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
   next();
 });
 
